@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --sand: #EFECE6;
+  --sand-dark: #E2DDD5;
+  --sand-card: #F7F5F0;
+  --earth-ink: #1C1A17;
+  --earth-muted: #5E5851;
+  --earth-faint: #968F85;
+  --accent-camel: #B88555;
+  --accent-camel-hover: #A07144;
+  --accent-sage: #28362B;
+  --accent-sage-light: #3A4D3E;
+  --border-warm: rgba(28, 26, 23, 0.1);
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: var(--sand);
+  color: var(--earth-ink);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography helpers ─────────────── */
+.font-display {
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+}
+
+.font-sans {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+.font-mono {
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── Fluted Glass Effect (from Hero reference) ─ */
+.fluted-glass {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  backdrop-filter: blur(8px);
+  border-right: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+.fluted-stripes {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 36px,
+    rgba(255, 255, 255, 0.08) 36px,
+    rgba(255, 255, 255, 0.08) 72px
+  );
+}
+
+/* ── Blueprint & Architectural Grid ── */
+.blueprint-grid {
+  background-color: #1a2a3a;
+  background-image: 
+    linear-gradient(rgba(100, 180, 240, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 180, 240, 0.18) 1px, transparent 1px),
+    linear-gradient(rgba(100, 180, 240, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 180, 240, 0.08) 1px, transparent 1px);
+  background-size: 50px 50px, 50px 50px, 10px 10px, 10px 10px;
+}
+
+.architect-grid {
+  background-image: 
+    linear-gradient(rgba(28, 24, 20, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(28, 24, 20, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ── Scroll Reveal ─────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+.delay-1 { transition-delay: 0.08s; }
+.delay-2 { transition-delay: 0.16s; }
+.delay-3 { transition-delay: 0.24s; }
+
+/* ── Custom Scrollbar ──────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--sand);
+}
+::-webkit-scrollbar-thumb {
+  background: #C4BCB1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A69E92;
+}
+
+/* ── Smooth Range Slider ───────────── */
+input[type=range].slider-handle::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1C1A17;
+  border: 2px solid #FFFFFF;
+  cursor: ew-resize;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* ── Interactive Pulse Pins ────────── */
+@keyframes pinPulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.6); opacity: 0.4; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pin-pulse {
+  animation: pinPulse 2s infinite ease-in-out;
+}

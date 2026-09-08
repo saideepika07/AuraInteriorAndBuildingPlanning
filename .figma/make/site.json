@@ -1,0 +1,10 @@
+{
+  "description": "This interactive web application enhances interior design planning with an engaging UI featuring motion graphics and dynamic elements, perfect for designers and homeowners.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
