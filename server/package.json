@@ -1,0 +1,22 @@
+{
+  "name": "aura-spaces-server",
+  "version": "1.0.0",
+  "description": "Express.js REST API backend for AURA Interior & House Planning Platform",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "seed": "node seeds/seedData.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5",
+    "dotenv": "^16.4.7",
+    "cors": "^2.8.5",
+    "multer": "^1.4.5-lts.1",
+    "firebase-admin": "^13.0.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {}
+}
