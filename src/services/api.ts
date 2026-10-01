@@ -1,8 +1,9 @@
 // AURA Spaces Unified REST API Client
 // Interfaces with the Express.js MVC Backend (/api)
 
-const API_BASE_URL =
+export const API_BASE_URL =
   (typeof window !== "undefined" && (window as any).__API_BASE_URL__) ||
+  (typeof window !== "undefined" && window.localStorage?.getItem("AURA_API_BASE_URL")) ||
   (import.meta.env.VITE_API_BASE_URL as string) ||
   "/api";
 

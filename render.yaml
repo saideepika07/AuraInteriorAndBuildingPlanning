@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: aura-spaces-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        value: https://saideepika07.github.io
+      - key: MONGO_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false

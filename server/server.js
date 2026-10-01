@@ -37,17 +37,29 @@ const allowedOrigins = [
 ];
 
 if (process.env.CLIENT_URL) {
-  allowedOrigins.push(process.env.CLIENT_URL);
+  process.env.CLIENT_URL.split(",").forEach((url) => {
+    const trimmed = url.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
 }
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl) or matched origins
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      // or matched origins, GitHub Pages domains, or any client in non-strict modes
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".github.io") ||
+        process.env.NODE_ENV !== "production"
+      ) {
         callback(null, true);
       } else {
-        callback(null, true); // Permissive in dev to avoid CORS friction
+        // Also allow by default to avoid production CORS blocking
+        callback(null, true);
       }
     },
     credentials: true,

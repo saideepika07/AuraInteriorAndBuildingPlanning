@@ -1,4 +1,5 @@
 // Firebase Client Configuration & Authentication Service
+import { API_BASE_URL } from "./api";
 // Used exclusively for:
 // 1. Authentication (Email / Password & Google Login)
 // 2. Storage (Blueprints & Interior Render Images)
@@ -139,7 +140,7 @@ export async function uploadImageToStorage(file: File, folder = "blueprints"): P
   formData.append("file", file);
 
   try {
-    const res = await fetch(`/api/upload/${folder === "blueprints" ? "blueprint" : "interior"}`, {
+    const res = await fetch(`${API_BASE_URL}/upload/${folder === "blueprints" ? "blueprint" : "interior"}`, {
       method: "POST",
       body: formData,
     });

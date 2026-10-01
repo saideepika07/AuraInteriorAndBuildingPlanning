@@ -1,4 +1,5 @@
 // Gemini AI Service for Spatial Planning & Interior Generation
+import { API_BASE_URL } from "./api";
 
 const FALLBACK_KEY_ENCODED = "QVEuQWI4Uk42THV4ZFZqWk9TMmtnZHkySk5jOHZvWi1FVExMejhkdEw2UWttcWZaaHc2QkE=";
 const GEMINI_API_KEY =
@@ -106,7 +107,7 @@ export async function analyzeRoomImage(
 
   // 1. Try Express backend AI API first
   try {
-    const res = await fetch("/api/ai/analyze-room", {
+    const res = await fetch(`${API_BASE_URL}/ai/analyze-room`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ base64Data: cleanBase64, mimeType, roomContext }),
@@ -421,7 +422,7 @@ export async function enhanceInteriorPrompt(
 ): Promise<{ enhancedPrompt: string; designSummary: string }> {
   // 1. Try Express backend AI API first
   try {
-    const res = await fetch("/api/ai/enhance-prompt", {
+    const res = await fetch(`${API_BASE_URL}/ai/enhance-prompt`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userNotes, style, roomType, dimensions, budget }),
@@ -522,7 +523,7 @@ export async function auditFloorPlanWithAI(planInfo: {
 }): Promise<FloorPlanAuditResult> {
   // 1. Try Express backend AI API first
   try {
-    const res = await fetch("/api/ai/audit-floorplan", {
+    const res = await fetch(`${API_BASE_URL}/ai/audit-floorplan`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(planInfo),
