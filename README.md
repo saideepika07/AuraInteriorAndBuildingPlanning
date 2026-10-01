@@ -1,5 +1,7 @@
 # 🏛️ AURA — AI Interior & Architectural Spatial Planner
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-saideepika07.github.io%2FAuraInteriorAndBuildingPlanning-00C781?style=for-the-badge&logo=google-chrome&logoColor=white)](https://saideepika07.github.io/AuraInteriorAndBuildingPlanning/)
+[![GitHub Pages](https://img.shields.io/badge/Deployment-GitHub_Pages-222222?style=for-the-badge&logo=github&logoColor=white)](https://saideepika07.github.io/AuraInteriorAndBuildingPlanning/)
 [![React 19](https://img.shields.io/badge/React-19.0.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
@@ -9,6 +11,8 @@
 [![Firebase](https://img.shields.io/badge/Firebase-Auth_%26_Storage-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![Google Gemini API](https://img.shields.io/badge/Google_Gemini-Multimodal_Vision-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 
+> 🌐 **Live Web Application:** **[https://saideepika07.github.io/AuraInteriorAndBuildingPlanning/](https://saideepika07.github.io/AuraInteriorAndBuildingPlanning/)**
+> 
 > **A luxury architectural spatial planner and generative AI interior design platform converted into a production-ready MERN + Firebase full-stack architecture.** Built with React 19, TypeScript, Tailwind CSS v4, Express.js, MongoDB Atlas, Firebase Auth/Storage, and Google Gemini Multimodal Vision, AURA combines parametric 2D vector CAD blueprint generation, interactive isometric 3D dollhouse visualization, customizable 1–4 BHK typologies with 100% attached en-suite washrooms, whole-building water infrastructure planning with verified plumbers, and automated spatial optimization into an editorial, magazine-grade interface.
 
 ---
