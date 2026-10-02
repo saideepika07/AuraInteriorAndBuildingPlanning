@@ -28,6 +28,26 @@ import {
   signOutUser,
   type AuraUser,
 } from "./services/firebase";
+import LoginPage from "./components/LoginPage";
+import ConsultationPage from "./components/ConsultationPage";
+import Blueprint2DViewer from "./components/Blueprint2DViewer";
+import House3DViewer from "./components/House3DViewer";
+import PlanComparisonModal from "./components/PlanComparisonModal";
+import WorkRequestModal from "./components/WorkRequestModal";
+import SlotBookingModal from "./components/SlotBookingModal";
+import EmailNotificationDrawer from "./components/EmailNotificationDrawer";
+import UserDashboard from "./components/UserDashboard";
+import ProfessionalDashboard from "./components/ProfessionalDashboard";
+import AdminDashboard from "./components/AdminDashboard";
+import ProfessionalDirectory from "./components/ProfessionalDirectory";
+import { type HousePlan, HOUSE_PLANS_DATA } from "./data/housePlansData";
+import { type ProfessionalProfile, PROFESSIONALS_DIRECTORY } from "./data/professionalsData";
+import {
+  housePlanningService,
+  type ConsultationRequest,
+  type ConfirmedSlotBooking,
+  type TransactionalEmailLog,
+} from "./services/housePlanningService";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PlannerInputs {
@@ -166,120 +186,180 @@ function AuraLogo({ className = "w-7 h-7" }: { className?: string }) {
   );
 }
 
-// ─── Navigation (Floating Pill Style from Screenshot 1) ───────────────────────
+// ─── Navigation (Floating Architectural Pill with Persona Switcher) ──────────
+// ─── Navigation (Floating Architectural Pill with Persona Switcher) ──────────
 function Nav({
-  onOpenConsultation,
-  onOpenAiStudio,
+  currentView,
+  onNavigate,
+  activePersona,
+  onPersonaChange,
+  unreadEmailCount,
+  onOpenEmailDrawer,
   user,
-  onOpenAuth,
+  onOpenLoginPage,
   onSignOut,
+  onOpenAiStudio,
 }: {
-  onOpenConsultation: () => void;
-  onOpenAiStudio: () => void;
+  currentView: string;
+  onNavigate: (
+    view:
+      | "home"
+      | "professionals"
+      | "consultation"
+      | "login"
+      | "user-dashboard"
+      | "pro-dashboard"
+      | "admin-dashboard",
+    hash?: string
+  ) => void;
+  activePersona: "customer" | "professional" | "admin";
+  onPersonaChange: (p: "customer" | "professional" | "admin") => void;
+  unreadEmailCount: number;
+  onOpenEmailDrawer: () => void;
   user?: AuraUser | null;
-  onOpenAuth?: () => void;
-  onSignOut?: () => void;
+  onOpenLoginPage: () => void;
+  onSignOut: () => void;
+  onOpenAiStudio: () => void;
 }) {
-  const [productDropdown, setProductDropdown] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-5 left-0 right-0 z-50 px-4 md:px-8 max-w-7xl mx-auto pointer-events-none">
-      <div className="bg-[#FAF8F5]/90 backdrop-blur-md border border-[rgba(28,26,23,0.08)] shadow-md rounded-full px-5 py-3 flex items-center justify-between pointer-events-auto transition-all">
+    <header className="fixed top-3 sm:top-5 left-0 right-0 z-50 px-3 sm:px-6 md:px-8 max-w-7xl mx-auto pointer-events-none">
+      <div className="bg-[#FAF8F5]/95 backdrop-blur-md border border-[rgba(28,26,23,0.1)] shadow-xl rounded-2xl md:rounded-full px-4 sm:px-6 py-2.5 sm:py-3 flex flex-wrap items-center justify-between pointer-events-auto transition-all gap-3">
         {/* Brand */}
-        <AuraLogo />
+        <div
+          onClick={() => onNavigate("home")}
+          className="cursor-pointer hover:opacity-85 transition-opacity flex items-center gap-2"
+        >
+          <AuraLogo />
+          <span className="hidden xl:inline text-[10px] uppercase font-mono tracking-widest text-[#8C827A] border-l border-black/15 pl-2.5">
+            Architecture &amp; Slots
+          </span>
+        </div>
 
-        {/* Links */}
-        <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-[#1C1A17]">
-          <div className="relative" onMouseLeave={() => setProductDropdown(false)}>
-            <button
-              onClick={() => setProductDropdown(!productDropdown)}
-              className="flex items-center gap-1.5 hover:text-[#B88555] transition-colors py-1"
-            >
-              <span>Product</span>
-              <span className="text-xs opacity-60">▾</span>
-            </button>
-            {productDropdown && (
-              <div className="absolute top-full left-0 mt-2 w-56 bg-[#FAF8F5] border border-[rgba(28,26,23,0.1)] rounded-xl shadow-lg p-2 space-y-1">
-                <a
-                  href="#planner"
-                  onClick={() => setProductDropdown(false)}
-                  className="block px-3 py-2 rounded-lg hover:bg-[#EFECE6] text-xs font-semibold text-[#1C1A17]"
-                >
-                  AI House Planner (2D Solver)
-                </a>
-                <a
-                  href="#scanner"
-                  onClick={() => setProductDropdown(false)}
-                  className="block px-3 py-2 rounded-lg hover:bg-[#EFECE6] text-xs font-semibold text-[#1C1A17]"
-                >
-                  Room &amp; Blueprint Scanner
-                </a>
-                <button
-                  onClick={() => {
-                    setProductDropdown(false);
-                    onOpenAiStudio();
-                  }}
-                  className="w-full text-left block px-3 py-2 rounded-lg hover:bg-[#EFECE6] text-xs font-semibold text-[#B88555]"
-                >
-                  AI Interior Studio ✦
-                </button>
-              </div>
-            )}
-          </div>
+        {/* Desktop Links */}
+        <nav className="hidden lg:flex items-center gap-1 xl:gap-2 text-xs font-semibold text-[#1C1A17]">
+          <button
+            onClick={() => onNavigate("home")}
+            className={`px-3 py-1.5 rounded-full transition-all ${
+              currentView === "home" ? "bg-[#1C1A17] text-white" : "hover:text-[#B88555] hover:bg-[#EFECE6]"
+            }`}
+          >
+            Home
+          </button>
 
-          <a href="#planner" className="hover:text-[#B88555] transition-colors">
-            Planner
-          </a>
-          <a href="#scanner" className="hover:text-[#B88555] transition-colors">
-            Space Optimizer
-          </a>
-          <a href="#workforce" className="hover:text-[#B88555] transition-colors flex items-center gap-1.5">
-            <span>Workforce</span>
-            <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-              Direct Hire
+          <button
+            onClick={() => onNavigate("professionals")}
+            className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
+              currentView === "professionals" ? "bg-[#1C1A17] text-white" : "hover:text-[#B88555] hover:bg-[#EFECE6]"
+            }`}
+          >
+            <span>Professionals</span>
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-bold">
+              9 Categories
             </span>
-          </a>
-          <a href="#portfolio" className="hover:text-[#B88555] transition-colors">
-            Portfolio
-          </a>
-          <a href="#services" className="hover:text-[#B88555] transition-colors">
-            Services
-          </a>
+          </button>
+
+          <button
+            onClick={() => onNavigate("consultation")}
+            className={`px-3 py-1.5 rounded-full transition-all ${
+              currentView === "consultation" ? "bg-[#1C1A17] text-white" : "hover:text-[#B88555] hover:bg-[#EFECE6]"
+            }`}
+          >
+            Consultation Scope
+          </button>
+
+          <button
+            onClick={() => onNavigate("user-dashboard")}
+            className={`px-3 py-1.5 rounded-full transition-all ${
+              currentView === "user-dashboard" ? "bg-[#1C1A17] text-white" : "hover:text-[#B88555] hover:bg-[#EFECE6]"
+            }`}
+          >
+            Client Workspace
+          </button>
         </nav>
 
-        {/* CTA Button & Auth */}
-        <div className="flex items-center gap-3">
+        {/* Persona Switcher & Tool Controls */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Persona Switcher Pill */}
+          <div className="hidden sm:flex items-center gap-1 bg-[#EFECE6] p-1 rounded-full border border-black/5 text-[11px] font-semibold">
+            <button
+              onClick={() => {
+                onPersonaChange("customer");
+                onNavigate("user-dashboard");
+              }}
+              title="Test view as Client Deepika Reddy"
+              className={`px-2.5 py-1 rounded-full transition-all ${
+                activePersona === "customer"
+                  ? "bg-[#1C1A17] text-white shadow-xs"
+                  : "text-[#1C1A17]/70 hover:text-[#1C1A17]"
+              }`}
+            >
+              👤 Client
+            </button>
+            <button
+              onClick={() => {
+                onPersonaChange("professional");
+                onNavigate("pro-dashboard");
+              }}
+              title="Test view as Professional Ar. Elena Rostova"
+              className={`px-2.5 py-1 rounded-full transition-all ${
+                activePersona === "professional"
+                  ? "bg-[#B88555] text-white shadow-xs"
+                  : "text-[#1C1A17]/70 hover:text-[#1C1A17]"
+              }`}
+            >
+              📐 Pro
+            </button>
+            <button
+              onClick={() => {
+                onPersonaChange("admin");
+                onNavigate("admin-dashboard");
+              }}
+              title="Test view as System Administrator"
+              className={`px-2.5 py-1 rounded-full transition-all ${
+                activePersona === "admin"
+                  ? "bg-[#331414] text-rose-200 shadow-xs"
+                  : "text-[#1C1A17]/70 hover:text-[#1C1A17]"
+              }`}
+            >
+              ⚙️ Admin
+            </button>
+          </div>
+
+          {/* Email / Transactional Log Drawer Button */}
+          <button
+            onClick={onOpenEmailDrawer}
+            className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white hover:bg-[#FAF8F5] border border-[rgba(28,26,23,0.12)] text-[#1C1A17] flex items-center justify-center transition-all shadow-xs"
+            title="Open Dispatched Transactional Email Simulator"
+          >
+            <span className="text-sm">✉️</span>
+            {unreadEmailCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-pulse shadow-xs">
+                {unreadEmailCount}
+              </span>
+            )}
+          </button>
+
+          {/* AI Studio Shortcut */}
           <button
             onClick={onOpenAiStudio}
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-[#1C1A17] hover:text-[#B88555] px-3 py-2 transition-colors"
+            className="hidden md:inline-flex items-center gap-1 text-xs font-semibold text-[#1C1A17] hover:text-[#B88555] px-2.5 py-1.5 transition-colors"
           >
             <span>AI Studio</span>
             <span>↗</span>
           </button>
-          <button
-            onClick={onOpenConsultation}
-            className="bg-[#B88555] hover:bg-[#A07144] text-[#FAF8F5] px-5 py-2.5 rounded-full font-medium text-xs md:text-sm transition-all shadow-sm active:scale-95"
-          >
-            Schedule a Consultation
-          </button>
 
-          {/* User Profile / Auth Pill */}
+          {/* Auth Button / Pill */}
           {user ? (
             <div className="flex items-center gap-2 pl-2 border-l border-[rgba(28,26,23,0.12)]">
-              {user.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt={user.displayName || "Client"}
-                  className="w-7 h-7 rounded-full object-cover border border-[#B88555]"
-                />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-[#1C1A17] text-white flex items-center justify-center text-[10px] font-bold">
-                  {(user.displayName || user.email || "U")[0].toUpperCase()}
-                </div>
-              )}
-              <span className="hidden xl:inline text-xs font-semibold text-[#1C1A17] max-w-[90px] truncate">
-                {user.displayName || user.email?.split("@")[0]}
-              </span>
+              <div
+                onClick={() => onNavigate("user-dashboard")}
+                className="w-7 h-7 rounded-full bg-[#1C1A17] text-white flex items-center justify-center text-[10px] font-bold cursor-pointer"
+                title="Open Client Workspace"
+              >
+                {(user.displayName || user.email || "C")[0].toUpperCase()}
+              </div>
               <button
                 onClick={onSignOut}
                 className="text-[11px] text-[#968F85] hover:text-[#1C1A17] font-medium"
@@ -290,85 +370,182 @@ function Nav({
             </div>
           ) : (
             <button
-              onClick={onOpenAuth}
-              className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-[#5E5851] hover:text-[#1C1A17] px-3.5 py-2 rounded-full border border-[rgba(28,26,23,0.15)] hover:border-[#B88555] transition-colors"
+              onClick={onOpenLoginPage}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1C1A17] hover:text-[#B88555] px-3.5 py-1.5 sm:py-2 rounded-full border border-[rgba(28,26,23,0.15)] hover:border-[#B88555] transition-colors"
             >
-              <span>Sign In</span>
+              <span>✦</span>
+              <span className="hidden sm:inline">Sign In</span>
             </button>
           )}
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-1.5 text-[#1C1A17]"
+          >
+            ☰
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden mt-2 bg-[#FAF8F5] border border-black/10 rounded-2xl p-4 shadow-xl pointer-events-auto space-y-2 text-xs font-semibold">
+          <button
+            onClick={() => {
+              onNavigate("home");
+              setMobileMenuOpen(false);
+            }}
+            className="block w-full text-left py-1.5 px-2 hover:bg-black/5 rounded-lg"
+          >
+            🏠 Home
+          </button>
+          <button
+            onClick={() => {
+              onNavigate("professionals");
+              setMobileMenuOpen(false);
+            }}
+            className="block w-full text-left py-1.5 px-2 hover:bg-black/5 rounded-lg"
+          >
+            🏛 Professionals &amp; Teams (9 Categories)
+          </button>
+          <button
+            onClick={() => {
+              onNavigate("consultation");
+              setMobileMenuOpen(false);
+            }}
+            className="block w-full text-left py-1.5 px-2 hover:bg-black/5 rounded-lg"
+          >
+            📋 Consultation Scope
+          </button>
+          <button
+            onClick={() => {
+              onNavigate("user-dashboard");
+              setMobileMenuOpen(false);
+            }}
+            className="block w-full text-left py-1.5 px-2 hover:bg-black/5 rounded-lg"
+          >
+            👤 Client Dashboard
+          </button>
+          <button
+            onClick={() => {
+              onNavigate("pro-dashboard");
+              setMobileMenuOpen(false);
+            }}
+            className="block w-full text-left py-1.5 px-2 hover:bg-black/5 rounded-lg"
+          >
+            💼 Pro Dashboard
+          </button>
+          <button
+            onClick={() => {
+              onNavigate("admin-dashboard");
+              setMobileMenuOpen(false);
+            }}
+            className="block w-full text-left py-1.5 px-2 hover:bg-black/5 rounded-lg text-rose-700"
+          >
+            ⚙️ Admin Console
+          </button>
+        </div>
+      )}
     </header>
   );
 }
 
-// ─── Hero Section (Exact Match to Screenshot 1 with fluted glass) ─────────────
-function Hero({ onOpenConsultation }: { onOpenConsultation: () => void }) {
+// ─── Hero Section ─────────────────────────────────────────────────────────────
+function Hero({
+  onOpenConsultation,
+  onOpenProfessionals,
+}: {
+  onOpenConsultation: () => void;
+  onOpenProfessionals: () => void;
+}) {
   return (
     <section className="relative min-h-screen pt-28 pb-16 px-4 md:px-8 flex items-center bg-[#EBE5DC]">
       <div className="max-w-7xl mx-auto w-full relative rounded-3xl overflow-hidden shadow-2xl min-h-[640px] md:min-h-[720px] flex flex-col justify-between">
-        {/* Background Image: Serene Warm Stone Architecture & Greenery */}
+        {/* Architectural Background Image */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=1800&h=1100&fit=crop&auto=format"
-            alt="Warm limestone interior with oval stone tub and lush palms"
+            src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&h=1080&fit=crop&auto=format"
+            alt="Ultra-modern architectural villa with natural lighting and landscaped garden"
             className="w-full h-full object-cover"
-            style={{ objectPosition: "center 40%" }}
+            style={{ objectPosition: "center 45%" }}
           />
-          {/* Subtle warm tint overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-transparent md:to-black/20" />
+          {/* Deep Architectural Lighting Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/30" />
         </div>
 
-        {/* Fluted Ribbed Glass Overlay on the Left (from Screenshot 1) */}
-        <div className="absolute left-0 top-0 bottom-0 w-full sm:w-2/3 md:w-1/2 fluted-glass fluted-stripes pointer-events-none z-10 opacity-80" />
+        {/* Fluted Ribbed Architectural Glass */}
+        <div className="absolute left-0 top-0 bottom-0 w-full sm:w-2/3 md:w-1/2 fluted-glass fluted-stripes pointer-events-none z-10 opacity-70" />
 
-        {/* Hero Content (Left Column) */}
-        <div className="relative z-20 p-8 md:p-16 max-w-xl flex flex-col justify-center flex-1">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md text-[#FAF8F5] px-3.5 py-1 rounded-full text-xs font-medium w-fit mb-6 border border-white/25">
+        {/* Hero Content */}
+        <div className="relative z-20 p-8 md:p-16 max-w-2xl flex flex-col justify-center flex-1">
+          <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md text-[#FAF8F5] px-4 py-1.5 rounded-full text-xs font-mono font-medium w-fit mb-6 border border-white/25">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>AI Spatial Intelligence &amp; In-House Craft</span>
+            <span>AI Spatial Intelligence &amp; Verified Professional Consultation</span>
           </div>
 
           <h1 className="font-display font-semibold text-4xl sm:text-5xl md:text-6xl text-white leading-[1.08] tracking-tight">
             Transform Your Space, Transform Your Life
           </h1>
 
-          <p className="mt-6 text-white/85 text-base md:text-lg leading-relaxed font-normal">
-            Upload your room photo or blueprint. Our neural engine detects space-saving multi-functional elements, generates code-compliant 2D floor plans, and directly pairs you with verified master craftsmen.
+          <p className="mt-6 text-white/90 text-base md:text-lg leading-relaxed font-normal">
+            Upload your room photo or blueprint. Our neural engine detects space-saving multi-functional elements, generates code-compliant spatial plans, and directly connects you with certified master architects and engineers.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <button
               onClick={onOpenConsultation}
-              className="bg-white hover:bg-[#FAF8F5] text-[#1C1A17] font-semibold px-7 py-3.5 rounded-xl shadow-lg transition-all active:scale-95 text-sm"
+              className="bg-[#B88555] hover:bg-[#A07144] text-white font-semibold px-7 py-4 rounded-xl shadow-xl transition-all active:scale-95 text-sm flex items-center gap-2"
             >
-              Schedule a Consultation
+              <span>Schedule a Consultation</span>
+              <span>→</span>
             </button>
+
+            <button
+              onClick={onOpenProfessionals}
+              className="bg-white hover:bg-[#FAF8F5] text-[#1C1A17] font-semibold px-7 py-4 rounded-xl shadow-lg transition-all active:scale-95 text-sm flex items-center gap-2"
+            >
+              <span>🏛 Verified Professionals</span>
+            </button>
+
             <a
               href="#scanner"
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-medium px-6 py-3.5 rounded-xl border border-white/30 transition-all text-sm"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-medium px-6 py-4 rounded-xl border border-white/30 transition-all text-sm"
             >
               Scan Room or Blueprint ↓
             </a>
           </div>
         </div>
 
-        {/* Stats on Bottom Right (Exact match to Screenshot 1) */}
-        <div className="relative z-20 p-8 md:p-12 self-end w-full flex justify-end">
-          <div className="bg-black/30 backdrop-blur-md border border-white/20 rounded-2xl p-5 md:p-6 flex flex-wrap items-center gap-8 md:gap-12 text-white">
+        {/* Feature Stat Pill Highlights */}
+        <div className="relative z-20 p-6 md:p-10 self-end w-full flex justify-end">
+          <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-5 md:p-6 flex flex-wrap items-center gap-6 md:gap-10 text-white">
             <div>
-              <div className="font-display text-3xl md:text-4xl font-bold leading-none">100+</div>
-              <div className="text-xs text-white/80 font-medium mt-1">Success projects</div>
+              <div className="font-display text-2xl md:text-3xl font-bold leading-none text-amber-300">
+                100+
+              </div>
+              <div className="text-[11px] text-white/80 font-medium mt-1">Success Projects</div>
             </div>
-            <div className="w-px h-10 bg-white/20" />
+            <div className="w-px h-8 bg-white/20" />
             <div>
-              <div className="font-display text-3xl md:text-4xl font-bold leading-none">300+</div>
-              <div className="text-xs text-white/80 font-medium mt-1">Materials</div>
+              <div className="font-display text-2xl md:text-3xl font-bold leading-none text-emerald-300">
+                9 Trades
+              </div>
+              <div className="text-[11px] text-white/80 font-medium mt-1">Verified Disciplines</div>
             </div>
-            <div className="w-px h-10 bg-white/20" />
+            <div className="w-px h-8 bg-white/20" />
             <div>
-              <div className="font-display text-3xl md:text-4xl font-bold leading-none">100+</div>
-              <div className="text-xs text-white/80 font-medium mt-1">Happy customers</div>
+              <div className="font-display text-2xl md:text-3xl font-bold leading-none text-sky-300">
+                Real-Time
+              </div>
+              <div className="text-[11px] text-white/80 font-medium mt-1">Slot Booking &amp; Protection</div>
+            </div>
+            <div className="w-px h-8 bg-white/20" />
+            <div>
+              <div className="font-display text-2xl md:text-3xl font-bold leading-none text-purple-300">
+                100%
+              </div>
+              <div className="text-[11px] text-white/80 font-medium mt-1">Client Satisfaction</div>
             </div>
           </div>
         </div>
@@ -5397,11 +5574,13 @@ function ConsultationModal({
   onClose,
   initialWorker,
   context,
+  onOpenFullStudio,
 }: {
   isOpen: boolean;
   onClose: () => void;
   initialWorker: WorkerProfile | null;
   context?: string;
+  onOpenFullStudio?: () => void;
 }) {
   const [workerId, setWorkerId] = useState<string>(initialWorker?.id || WORKFORCE_ROSTER[0].id);
   const [name, setName] = useState("");
@@ -5462,6 +5641,25 @@ function ConsultationModal({
             ✕
           </button>
         </div>
+
+        {onOpenFullStudio && (
+          <div className="bg-amber-50/80 border border-amber-200/80 p-3 rounded-2xl flex items-center justify-between text-xs">
+            <div>
+              <span className="font-bold text-amber-950 block">Customize by Budget &amp; Days</span>
+              <span className="text-[11px] text-amber-800">Use our interactive Consultation Studio.</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenFullStudio();
+              }}
+              className="px-3 py-1.5 rounded-xl bg-[#28362B] hover:bg-[#1E2B22] text-white text-[11px] font-semibold whitespace-nowrap shadow-xs"
+            >
+              Open Studio ↗
+            </button>
+          </div>
+        )}
 
         {!submitted ? (
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
@@ -5570,10 +5768,12 @@ function AuthModal({
   isOpen,
   onClose,
   onUserAuth,
+  onOpenLoginPage,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onUserAuth: (user: AuraUser) => void;
+  onOpenLoginPage?: () => void;
 }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -5733,6 +5933,22 @@ function AuthModal({
             {isSignUp ? "Sign In" : "Register"}
           </button>
         </div>
+
+        {onOpenLoginPage && (
+          <div className="p-3 bg-[#EFECE6] rounded-xl text-center text-xs">
+            <span className="text-[#575149]">Prefer phone &amp; name direct access? </span>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenLoginPage();
+              }}
+              className="text-[#B88555] font-bold hover:underline ml-1"
+            >
+              Open Full Login Page ↗
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -5805,8 +6021,51 @@ export default function App() {
   useReveal();
 
   const [currentUser, setCurrentUser] = useState<AuraUser | null>(null);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<
+    | "home"
+    | "professionals"
+    | "consultation"
+    | "login"
+    | "user-dashboard"
+    | "pro-dashboard"
+    | "admin-dashboard"
+  >("home");
 
+  // Persona Switcher: Client Deepika Reddy, Professional Ar. Elena Rostova, or Platform Admin
+  const [activePersona, setActivePersona] = useState<"customer" | "professional" | "admin">("customer");
+
+  const [consultationWorkerId, setConsultationWorkerId] = useState<string | undefined>(undefined);
+  const [consultationScopeContext, setConsultationScopeContext] = useState<string | undefined>(undefined);
+
+  // 2D Blueprint & 3D Visualization Modals
+  const [blueprintPlan, setBlueprintPlan] = useState<HousePlan | null>(null);
+  const [threeDPlan, setThreeDPlan] = useState<HousePlan | null>(null);
+
+  // Multi-Plan Comparison Modal
+  const [comparePlans, setComparePlans] = useState<HousePlan[]>([]);
+  const [compareModalOpen, setCompareModalOpen] = useState(false);
+
+  // Work Request & Consultation Modal
+  const [workRequestPlan, setWorkRequestPlan] = useState<HousePlan | null>(null);
+  const [workRequestModalOpen, setWorkRequestModalOpen] = useState(false);
+
+  // Slot Booking Modal with Double-Booking Prevention
+  const [activeBookingRequest, setActiveBookingRequest] = useState<ConsultationRequest | null>(null);
+  const [slotBookingModalOpen, setSlotBookingModalOpen] = useState(false);
+
+  // Transactional Email / Dispatched Notification Drawer
+  const [emailDrawerOpen, setEmailDrawerOpen] = useState(false);
+  const [unreadEmailCount, setUnreadEmailCount] = useState<number>(() => {
+    return housePlanningService.getEmailLogs().filter((e) => !e.read).length;
+  });
+
+  const refreshEmails = () => {
+    const unread = housePlanningService.getEmailLogs().filter((e) => !e.read).length;
+    setUnreadEmailCount(unread);
+  };
+
+  // Auth & Legacy Studio Modals
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState<WorkerProfile | null>(null);
   const [consultationContext, setConsultationContext] = useState<string | undefined>(undefined);
@@ -5828,38 +6087,301 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  const handleOpenConsultation = (worker?: WorkerProfile, context?: string) => {
+  // Hash-based routing across views
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === "#login") {
+        setCurrentView("login");
+      } else if (hash === "#consultation") {
+        setCurrentView("consultation");
+      } else if (hash === "#professionals" || hash === "#workforce") {
+        setCurrentView("professionals");
+      } else if (hash === "#user-dashboard" || hash === "#dashboard") {
+        setCurrentView("user-dashboard");
+      } else if (hash === "#pro-dashboard") {
+        setCurrentView("pro-dashboard");
+      } else if (hash === "#admin-dashboard" || hash === "#admin") {
+        setCurrentView("admin-dashboard");
+      } else if (
+        hash === "" ||
+        hash === "#" ||
+        hash === "#home" ||
+        hash === "#planner" ||
+        hash === "#scanner" ||
+        hash === "#portfolio" ||
+        hash === "#services"
+      ) {
+        setCurrentView("home");
+      }
+    };
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
+
+  const navigateToView = (
+    view:
+      | "home"
+      | "professionals"
+      | "consultation"
+      | "login"
+      | "user-dashboard"
+      | "pro-dashboard"
+      | "admin-dashboard",
+    hash?: string
+  ) => {
+    setCurrentView(view);
+    if (view === "home") {
+      window.location.hash = hash || "";
+      if (!hash) window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      window.location.hash = `#${view}`;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleOpenBlueprint = (plan: HousePlan) => {
+    setBlueprintPlan(plan);
+  };
+
+  const handleOpen3D = (plan: HousePlan) => {
+    setThreeDPlan(plan);
+  };
+
+  const handleOpenComparison = (plans: HousePlan[]) => {
+    setComparePlans(plans);
+    setCompareModalOpen(true);
+  };
+
+  const handleRequestConsultation = (plan: HousePlan) => {
+    setWorkRequestPlan(plan);
+    setWorkRequestModalOpen(true);
+  };
+
+  const handleOpenBookingModal = (request: ConsultationRequest) => {
+    setActiveBookingRequest(request);
+    setSlotBookingModalOpen(true);
+  };
+
+  const handleBookingConfirmed = (_booking: ConfirmedSlotBooking) => {
+    setSlotBookingModalOpen(false);
+    refreshEmails();
+    setEmailDrawerOpen(true);
+  };
+
+  const handleOpenConsultationModal = (worker?: WorkerProfile, context?: string) => {
     setSelectedWorker(worker || null);
     setConsultationContext(context);
     setConsultationOpen(true);
   };
 
+  const handleOpenConsultationPage = (workerId?: string, context?: string) => {
+    if (workerId) setConsultationWorkerId(workerId);
+    if (context) setConsultationScopeContext(context);
+    navigateToView("consultation");
+  };
+
   const handleHireTrade = (trade: string, context: string) => {
-    const match = WORKFORCE_ROSTER.find((w) =>
-      w.role.toLowerCase().includes(trade.toLowerCase()) ||
-      w.category.toLowerCase().includes(trade.toLowerCase())
+    const match = WORKFORCE_ROSTER.find(
+      (w) =>
+        w.role.toLowerCase().includes(trade.toLowerCase()) ||
+        w.category.toLowerCase().includes(trade.toLowerCase())
     );
     setSelectedWorker(match || null);
     setConsultationContext(context);
-    setConsultationOpen(true);
+    handleOpenConsultationPage(match?.id, context);
   };
 
+  // ─── Render View: Login ─────────────────────────────────────────────────────
+  if (currentView === "login") {
+    return (
+      <LoginPage
+        onLoginSuccess={(u) => {
+          setCurrentUser(u);
+          navigateToView("user-dashboard");
+        }}
+        onNavigateToConsultation={() => navigateToView("consultation")}
+        onBackToHome={() => navigateToView("home")}
+        initialName={currentUser?.displayName || ""}
+        initialEmail={currentUser?.email || ""}
+        initialPhone={currentUser?.phoneNumber || ""}
+      />
+    );
+  }
+
+  // ─── Render View: Consultation Studio ───────────────────────────────────────
+  if (currentView === "consultation") {
+    return (
+      <ConsultationPage
+        currentUser={currentUser}
+        onOpenLogin={() => navigateToView("login")}
+        onBackToHome={() => navigateToView("home")}
+        initialWorkerId={consultationWorkerId}
+        initialScope={consultationScopeContext}
+        onOpenAiPlanner={(_budgetLakhs) => {
+          navigateToView("home", "planner");
+          setTimeout(() => {
+            const el = document.getElementById("planner");
+            if (el) el.scrollIntoView({ behavior: "smooth" });
+          }, 150);
+        }}
+      />
+    );
+  }
+
+  // ─── Render View: User / Client Dashboard ───────────────────────────────────
+  if (currentView === "user-dashboard") {
+    return (
+      <div className="min-h-screen bg-[#F6F3ED]">
+        <Nav
+          currentView={currentView}
+          onNavigate={navigateToView}
+          activePersona={activePersona}
+          onPersonaChange={setActivePersona}
+          unreadEmailCount={unreadEmailCount}
+          onOpenEmailDrawer={() => setEmailDrawerOpen(true)}
+          user={currentUser}
+          onOpenLoginPage={() => navigateToView("login")}
+          onSignOut={() => signOutUser()}
+          onOpenAiStudio={() => setAiStudioOpen(true)}
+        />
+        <UserDashboard
+          currentUser={currentUser}
+          onOpenBlueprint={handleOpenBlueprint}
+          onOpen3D={handleOpen3D}
+          onOpenBookingModal={handleOpenBookingModal}
+          onExplorePlans={() => navigateToView("consultation")}
+          onOpenLogin={() => navigateToView("login")}
+        />
+        <Footer />
+
+        {/* Global Modals for Dashboard actions */}
+        {renderModals()}
+      </div>
+    );
+  }
+
+  // ─── Render View: Professional Dashboard ────────────────────────────────────
+  if (currentView === "pro-dashboard") {
+    return (
+      <div className="min-h-screen bg-[#F6F3ED]">
+        <Nav
+          currentView={currentView}
+          onNavigate={navigateToView}
+          activePersona={activePersona}
+          onPersonaChange={setActivePersona}
+          unreadEmailCount={unreadEmailCount}
+          onOpenEmailDrawer={() => setEmailDrawerOpen(true)}
+          user={currentUser}
+          onOpenLoginPage={() => navigateToView("login")}
+          onSignOut={() => signOutUser()}
+          onOpenAiStudio={() => setAiStudioOpen(true)}
+        />
+        <ProfessionalDashboard onBackToHome={() => navigateToView("home")} />
+        <Footer />
+        {renderModals()}
+      </div>
+    );
+  }
+
+  // ─── Render View: Admin Dashboard ───────────────────────────────────────────
+  if (currentView === "admin-dashboard") {
+    return (
+      <div className="min-h-screen bg-[#F6F3ED]">
+        <Nav
+          currentView={currentView}
+          onNavigate={navigateToView}
+          activePersona={activePersona}
+          onPersonaChange={setActivePersona}
+          unreadEmailCount={unreadEmailCount}
+          onOpenEmailDrawer={() => setEmailDrawerOpen(true)}
+          user={currentUser}
+          onOpenLoginPage={() => navigateToView("login")}
+          onSignOut={() => signOutUser()}
+          onOpenAiStudio={() => setAiStudioOpen(true)}
+        />
+        <AdminDashboard onBackToHome={() => navigateToView("home")} />
+        <Footer />
+        {renderModals()}
+      </div>
+    );
+  }
+
+  // ─── Render View: Professionals Directory ───────────────────────────────────
+  if (currentView === "professionals") {
+    return (
+      <div className="min-h-screen bg-[#EBE5DC]">
+        <Nav
+          currentView={currentView}
+          onNavigate={navigateToView}
+          activePersona={activePersona}
+          onPersonaChange={setActivePersona}
+          unreadEmailCount={unreadEmailCount}
+          onOpenEmailDrawer={() => setEmailDrawerOpen(true)}
+          user={currentUser}
+          onOpenLoginPage={() => navigateToView("login")}
+          onSignOut={() => signOutUser()}
+          onOpenAiStudio={() => setAiStudioOpen(true)}
+        />
+
+        <div className="pt-28 pb-6 px-4 md:px-8 max-w-7xl mx-auto">
+          <div className="bg-[#181614] text-white rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+            <div className="relative z-10 space-y-4 max-w-3xl">
+              <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-3.5 py-1 rounded-full text-xs font-mono font-medium border border-emerald-500/30">
+                <span>✦</span>
+                <span>VERIFIED PROFESSIONAL DIRECTORY</span>
+              </div>
+              <h1 className="font-display font-semibold text-3xl sm:text-4xl md:text-5xl text-white tracking-tight">
+                9 Disciplines of Verified Architectural Masters
+              </h1>
+              <p className="text-white/80 text-sm md:text-base leading-relaxed">
+                Connect directly with certified Architects, Civil Engineers, Structural Engineers, Interior Designers, 3D Artists, MEP Engineers, Contractors, and Turnkey Teams. Review fees, client ratings, and reserve slots.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 md:px-8 pb-16">
+          <ProfessionalDirectory
+            onRequestConsultationWithPro={(pro) => {
+              setWorkRequestPlan(null);
+              setWorkRequestModalOpen(true);
+            }}
+          />
+        </div>
+
+        <Footer />
+        {renderModals()}
+      </div>
+    );
+  }
+
+  // ─── Render View: Main Home Page ────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#EBE5DC]">
-      {/* Floating Pill Nav from Screenshot 1 */}
+      {/* Floating Pill Nav with Persona Switcher & Email Bell */}
       <Nav
-        onOpenConsultation={() => handleOpenConsultation()}
-        onOpenAiStudio={() => setAiStudioOpen(true)}
+        currentView={currentView}
+        onNavigate={navigateToView}
+        activePersona={activePersona}
+        onPersonaChange={setActivePersona}
+        unreadEmailCount={unreadEmailCount}
+        onOpenEmailDrawer={() => setEmailDrawerOpen(true)}
         user={currentUser}
-        onOpenAuth={() => setAuthModalOpen(true)}
+        onOpenLoginPage={() => navigateToView("login")}
         onSignOut={() => signOutUser()}
+        onOpenAiStudio={() => setAiStudioOpen(true)}
       />
 
-      {/* Hero with Fluted Glass Overlay and Stats from Screenshot 1 */}
-      <Hero onOpenConsultation={() => handleOpenConsultation()} />
+      {/* Hero with Direct Consultation & Professionals CTA */}
+      <Hero
+        onOpenConsultation={() => handleOpenConsultationPage()}
+        onOpenProfessionals={() => navigateToView("professionals")}
+      />
 
       {/* Floating Quick Bar for AI Studio */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-10 relative z-30">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 mb-12 relative z-30">
         <div className="bg-[#28362B] text-white p-6 md:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-xl">
@@ -5894,7 +6416,11 @@ export default function App() {
       />
 
       {/* Section 03: Direct Hire Verified In-House Workforce */}
-      <WorkforceSection onHireWorker={(w) => handleOpenConsultation(w)} />
+      <WorkforceSection
+        onHireWorker={(w) =>
+          handleOpenConsultationPage(w.id, `Direct Hire: ${w.name} (${w.role})`)
+        }
+      />
 
       {/* Section 04: Architectural Services & Portfolio */}
       <ServicesAndPortfolio />
@@ -5902,43 +6428,140 @@ export default function App() {
       {/* Footer */}
       <Footer />
 
-      {/* Modal: "Build Interior with AI" (Screenshot 2) */}
-      <AiStudioModal
-        isOpen={aiStudioOpen}
-        onClose={() => setAiStudioOpen(false)}
-        onOpenExport={() => setExportModalOpen(true)}
-        onOpenShare={() => setShareModalOpen(true)}
-        onHireTrade={handleHireTrade}
-        onUpdateExportPayload={setExportPayload}
-      />
-
-      {/* Modal: Export This File (Screenshot 2) */}
-      <ExportFileModal
-        isOpen={exportModalOpen}
-        onClose={() => setExportModalOpen(false)}
-        exportData={exportPayload}
-      />
-
-      {/* Modal: Share This File (Screenshot 2) */}
-      <ShareFileModal
-        isOpen={shareModalOpen}
-        onClose={() => setShareModalOpen(false)}
-      />
-
-      {/* Modal: Schedule a Consultation / Direct Hire */}
-      <ConsultationModal
-        isOpen={consultationOpen}
-        onClose={() => setConsultationOpen(false)}
-        initialWorker={selectedWorker}
-        context={consultationContext}
-      />
-
-      {/* Modal: Firebase Authentication */}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        onUserAuth={(u) => setCurrentUser(u)}
-      />
+      {/* Render all Global Modals */}
+      {renderModals()}
     </div>
   );
+
+  // ─── Helper function to render all modals ───────────────────────────────────
+  function renderModals() {
+    return (
+      <>
+        {/* 2D Architectural Blueprint Modal */}
+        {blueprintPlan && (
+          <Blueprint2DViewer
+            plan={blueprintPlan}
+            onClose={() => setBlueprintPlan(null)}
+            onOpen3DView={(p) => {
+              setBlueprintPlan(null);
+              setThreeDPlan(p);
+            }}
+            onRequestConsultation={(p) => {
+              setBlueprintPlan(null);
+              handleRequestConsultation(p);
+            }}
+          />
+        )}
+
+        {/* 3D Multi-Angle House Visualization Modal */}
+        {threeDPlan && (
+          <House3DViewer
+            plan={threeDPlan}
+            onClose={() => setThreeDPlan(null)}
+            onOpen2DBlueprint={(p) => {
+              setThreeDPlan(null);
+              setBlueprintPlan(p);
+            }}
+            onRequestConsultation={(p) => {
+              setThreeDPlan(null);
+              handleRequestConsultation(p);
+            }}
+          />
+        )}
+
+        {/* Multi-Layout Comparison Modal */}
+        {compareModalOpen && comparePlans.length > 0 && (
+          <PlanComparisonModal
+            plans={comparePlans}
+            onClose={() => setCompareModalOpen(false)}
+            onSelectPlan={(p) => {
+              setCompareModalOpen(false);
+              setBlueprintPlan(p);
+            }}
+            onOpenBlueprint={(p) => {
+              setCompareModalOpen(false);
+              setBlueprintPlan(p);
+            }}
+            onOpen3D={(p) => {
+              setCompareModalOpen(false);
+              setThreeDPlan(p);
+            }}
+          />
+        )}
+
+        {/* Work Request / Consultation Modal */}
+        <WorkRequestModal
+          isOpen={workRequestModalOpen}
+          onClose={() => setWorkRequestModalOpen(false)}
+          selectedPlan={workRequestPlan}
+          initialCustomerName={currentUser?.displayName || "Deepika Reddy"}
+          initialCustomerPhone={currentUser?.phoneNumber || "+91 98765 43210"}
+          initialCustomerEmail={currentUser?.email || "deepika.reddy@example.com"}
+          onRequestSubmitted={(_req) => {
+            setWorkRequestModalOpen(false);
+            refreshEmails();
+            setEmailDrawerOpen(true);
+          }}
+        />
+
+        {/* Slot Booking Modal with Double-Booking Prevention */}
+        {activeBookingRequest && (
+          <SlotBookingModal
+            isOpen={slotBookingModalOpen}
+            onClose={() => setSlotBookingModalOpen(false)}
+            request={activeBookingRequest}
+            onBookingConfirmed={handleBookingConfirmed}
+          />
+        )}
+
+        {/* Dispatched Transactional Email Simulator Drawer */}
+        <EmailNotificationDrawer
+          isOpen={emailDrawerOpen}
+          onClose={() => {
+            setEmailDrawerOpen(false);
+            refreshEmails();
+          }}
+          activeRole={activePersona}
+        />
+
+        {/* Legacy AI Studio Modals */}
+        <AiStudioModal
+          isOpen={aiStudioOpen}
+          onClose={() => setAiStudioOpen(false)}
+          onOpenExport={() => setExportModalOpen(true)}
+          onOpenShare={() => setShareModalOpen(true)}
+          onHireTrade={handleHireTrade}
+          onUpdateExportPayload={setExportPayload}
+        />
+
+        <ExportFileModal
+          isOpen={exportModalOpen}
+          onClose={() => setExportModalOpen(false)}
+          exportData={exportPayload}
+        />
+
+        <ShareFileModal
+          isOpen={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+        />
+
+        <ConsultationModal
+          isOpen={consultationOpen}
+          onClose={() => setConsultationOpen(false)}
+          initialWorker={selectedWorker}
+          context={consultationContext}
+          onOpenFullStudio={() =>
+            handleOpenConsultationPage(selectedWorker?.id, consultationContext)
+          }
+        />
+
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          onUserAuth={(u) => setCurrentUser(u)}
+          onOpenLoginPage={() => navigateToView("login")}
+        />
+      </>
+    );
+  }
 }

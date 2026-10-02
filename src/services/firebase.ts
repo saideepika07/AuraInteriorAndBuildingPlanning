@@ -9,6 +9,7 @@ export interface AuraUser {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  phoneNumber?: string | null;
 }
 
 // Client-side Firebase Configuration from environment
@@ -122,6 +123,37 @@ export async function signUpWithEmail(email: string, _password: string, name?: s
 }
 
 /**
+ * Sign in using contact details (Name, Email, Phone/Contact)
+ */
+export async function signInWithContactDetails(
+  name: string,
+  email: string,
+  phone: string
+): Promise<AuraUser> {
+  const cleanPhone = phone.trim();
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanName = name.trim();
+
+  const mockUser: AuraUser = {
+    uid: `usr-contact-${Date.now().toString(36)}-${Math.floor(1000 + Math.random() * 9000)}`,
+    email: cleanEmail,
+    displayName: cleanName,
+    photoURL: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&h=160&fit=crop&auto=format`,
+    phoneNumber: cleanPhone,
+  };
+
+  const token = `aura-jwt-${Date.now()}-${mockUser.uid}`;
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(USER_KEY, JSON.stringify(mockUser));
+    window.localStorage.setItem(TOKEN_KEY, token);
+    window.localStorage.setItem("AURA_USER_CONTACT", cleanPhone);
+  }
+
+  notifyListeners(mockUser);
+  return mockUser;
+}
+
+/**
  * Sign out user
  */
 export async function signOutUser(): Promise<void> {
@@ -167,6 +199,7 @@ export default {
   signInWithGoogle,
   signInWithEmail,
   signUpWithEmail,
+  signInWithContactDetails,
   signOutUser,
   uploadImageToStorage,
 };
