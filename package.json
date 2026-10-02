@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "deploy": "gh-pages -d dist --dotfiles --nojekyll",
     "format": "oxfmt",
     "server": "node server/server.js",
     "server:dev": "node --watch server/server.js",
